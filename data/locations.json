@@ -1,0 +1,12 @@
+[
+  ["placeCode", "placeName", "latitude", "longitude"],
+  ["JMS", "John Mackay Statue", 39.53916, -119.81437],
+  ["DLM", "DelaMare Library", 39.53922, -119.81442],
+  ["SEM", "Scrugham Engineering Mines", 39.53946, -119.81401],
+  ["LME", "Laxalt Mineral Engineering", 39.53889, -119.81386],
+  ["MS", "Mackay Science", 39.53818, -119.81363],
+  ["MH", "Morrill Hall", 39.53768, -119.81392],
+  ["CA", "Clark Administration", 39.53765, -119.81498],
+  ["JB", "Jones Building", 39.53827, -119.81473],
+  ["RH", "Ross Hall", 39.53866, -119.81484]
+]
