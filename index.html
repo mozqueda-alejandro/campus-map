@@ -12,71 +12,59 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
 
+  <script src="script.js" defer></script>
+
   <title>UNR Map</title>
 </head>
 
 <body>
 <div id="container">
-  <div >
-    <button id="header-button">
-      <span id="header">UNR Old Campus</span>
-    </button>
-
-    <button id="test-marker">
-      Test Marker
-    </button>
-
-
-    <div class="dropdown" data-control="checkbox-dropdown" id="frequency">
-      <label class="dropdown-label">Select</label>
-
-      <div class="dropdown-list">
-        <label class="dropdown-option">
-          <input type="checkbox" name="dropdown-group" value="Mo"/>
-          Monday
-        </label>
-        <label class="dropdown-option">
-          <input type="checkbox" name="dropdown-group" value="Tu"/>
-          Tuesday
-        </label>
-        <label class="dropdown-option">
-          <input type="checkbox" name="dropdown-group" value="We"/>
-          Wednesday
-        </label>
-        <label class="dropdown-option">
-          <input type="checkbox" name="dropdown-group" value="Th"/>
-          Thursday
-        </label>
-        <label class="dropdown-option">
-          <input type="checkbox" name="dropdown-group" value="Fr"/>
-          Friday
-        </label>
-      </div>
+  <div id="input-container">
+    <div id="header-container">
+      <button id="header-button">
+        <span id="header">UNR Old Campus</span>
+      </button>
     </div>
 
-    <label for="place-1-name">Place Name </label>
-    <input id="place-1-name" disabled type=text size=25>
+    <table>
+      <tr>
+        <td>
+          <label for="place-0-input">Place 1</label>
+        </td>
+        <td>
+          <input list="places-0" class="places-input" data-slot-id="0" id="place-0-input" size=2>
+          <datalist id="places-0" class="place-list" data-slot-id="0"></datalist>
+        </td>
+        <td>
+          <label for="place-0-name">Place Name </label>
+          <input id="place-0-name" disabled type="text" size=25>
+        </td>
+      </tr>
 
-    <label>
-      Place 2
-      <input type="search" list="places-2" id="input-place-2" size=1>
-    </label>
-    <datalist id="places-2"></datalist>
+      <tr>
+        <td>
+          <label for="place-1-input">Place 2</label>
+        </td>
+        <td>
+          <input list="places-1" class="places-input" data-slot-id="1" id="place-1-input" size=2>
+          <datalist id="places-1" class="place-list" data-slot-id="1"></datalist>
+        </td>
+        <td>
+          <label for="place-1-name">Place Name </label>
+          <input id="place-1-name" disabled type="text" size=25>
+        </td>
+      </tr>
+    </table>
 
-    <label for=dist>Distance </label>
-    <input disabled id=dist size=15>
+    <div>
+      <label for="distance">Distance </label>
+      <input disabled id="distance" size=15>
+    </div>
   </div>
+
   <div id="map"></div>
 </div>
 
-<script>
-  $.getScript('loadMapScript.js', async function () {
-    $(window).on('load', async function() {
-      $.getScript('script.js', async function () {
-        console.log('All scripts loaded.');
-      });
-    });
-  });
-</script>
+<script src="loadMapScript.js" defer></script>
 </body>
 </html>

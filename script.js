@@ -2,56 +2,9 @@
 // 4/16/2024
 
 
-const onChange = () => {
-
-}
-
-(function ($) {
-  let CheckboxDropdown = function (element, onChange) {
-    let _this = this;
-    this.isOpen = false;
-    this.onChange = onChange || function () {
-    };
-    this.$dropdownElement = $(element);
-    this.$label = this.$dropdownElement.find('.dropdown-label');
-    this.$input = this.$dropdownElement.find('[type="button"]');
-    
-    
-    this.$label.on('click', function (e) {
-      e.preventDefault();
-      _this.toggleOpen();
-    });
-    
-    this.$input.on('click', function (e) {
-      // _this.onCheckBox();
-    });
-  };
-  
-  
-  CheckboxDropdown.prototype.toggleOpen = function (forceOpen) {
-    let _this = this;
-    if (!this.isOpen || forceOpen) {
-      this.isOpen = true;
-      this.$dropdownElement.addClass('on');
-      
-      // Close dropdown when clicking outside
-      $(document).on('click', function (e) {
-        if (!$(e.target).closest('[data-control]').length) {
-          _this.toggleOpen();
-        }
-      });
-    } else {
-      this.isOpen = false;
-      this.$dropdownElement.removeClass('on');
-      $(document).off('click');
-    }
-  };
-  
-  // Initialize checkbox dropdowns
-  $('[data-control="checkbox-dropdown"]').each(function () {
-    new CheckboxDropdown($(this), onChange);
-  });
-})(jQuery);
+let map, anchor = { lat: 39.53852, lng: -119.81422 };
+let locations = {};
+const placeSlots = Array($('.place-list').length).fill(null);
 
 class Location {
   constructor(code, name, latitude, longitude) {
@@ -61,6 +14,10 @@ class Location {
     this.longitude = longitude;
   }
 }
+
+// ------------------------------------------------------------------------
+// Section: Initialization/data fetching
+// ------------------------------------------------------------------------
 
 async function tryFetchData(url) {
   try {
@@ -82,51 +39,110 @@ async function initData() {
   if (remoteData) return remoteData;
 }
 
-let markedLocations = {};
-(async () => {
+async function initMap() {
+  const { Map } = await google.maps.importLibrary("maps");
+  map = new Map($("#map")[0], { center: anchor, zoom: 18, mapId: "UNR_QUAD" });
+}
+
+async function init() {
+  await initMap();
   const data = await initData();
   if (data) {
     data
       .slice(1)
       .forEach(location => {
-        markedLocations[location[0]] = [false, new Location(...location)];
+        locations[location[0]] = new Location(...location);
       });
   }
-  await initMap();
-})();
-
-$('#header-button').click(function () {
-  alert('Header clicked!');
-});
-$('#test-marker').click(async function () {
-  await addMarker(["TM", "Test Marker", 39.53852, -119.81422]);
-});
-$('#input-place-1').on('input', async function () {
-  const locationName = markedLocations[$(this).val()];
-  $('#place-1-name').text(locationName);
-});
-const places1 = $('#places-1');
-let i = 0;
-console.log();
-for (const location in markedLocations) {
-  console.log(i);
-  i++;
-  // places1.append(`<option value="${markedLocations[location][1][0]}">${markedLocations[location][1][0]}</option>`);
+  for (const location in locations) {
+    $('#places-0').append(`<option value="${ location }"></option>`);
+    $('#places-1').append(`<option value="${ location }"></option>`);
+    sortDatalistOptions(0);
+    sortDatalistOptions(1);
+  }
 }
 
+// ------------------------------------------------------------------------
+// Section: Event listeners and helpers
+// ------------------------------------------------------------------------
 
-let markers = [];
-let map, anchor = { lat: 39.53852, lng: -119.81422 };
-
-const initMap = async () => {
-  const { Map } = await google.maps.importLibrary("maps");
-  map = new Map($("#map")[0], { center: anchor, zoom: 18, mapId: "UNR_QUAD" });
-};
-
-const addMarker = async (location) => {
-  if (markedLocations[location[0]] || !map) {
+$('.places-input').on('input', async function () {
+  const code = this.value;
+  if (code > 3) {
+    $(this).val(code.slice(0, 3));
     return;
   }
+  
+  const slotId = getSlotId(this);
+  const lastCode = placeSlots[slotId];
+  let otherPlaceLists = $(`.place-list:not([data-slot-id="${ slotId }"])`);
+  
+  if (!locations[code]) { // On invalid location code
+    if (lastCode === null) return;
+    
+    // Add the location back to the other input lists
+    otherPlaceLists.each(function () {
+      const optionExists = $(this).find(`option[value="${ lastCode }"]`).length > 0;
+      if (optionExists) return;
+      
+      $(this).append(`<option value="${ lastCode }"></option>`);
+      sortDatalistOptions(getSlotId(this));
+    });
+    
+    $(`#place-${ slotId }-name`).val('');
+    placeSlots[slotId] = null;
+    await removeMarker(lastCode);
+    setTotalDistance();
+    return;
+  }
+  
+  if (lastCode === code) return; // Location entered is the same as the current location
+  
+  const location = locations[code];
+  otherPlaceLists.each(function () {
+    $(this).find(`option[value="${ code }"]`).remove();
+  });
+  
+  $(`#place-${ slotId }-name`).val(location.name);
+  placeSlots[slotId] = location.code;
+  await addMarker(code);
+  setTotalDistance();
+});
+
+$('#header-button').click(function clearAll() {
+  const inputs = $('.places-input');
+  inputs.val('');
+  inputs.trigger('input');
+});
+
+function sortDatalistOptions(slotId) {
+  let dataList = $(`#places-${ slotId }`);
+  let options = $(`#places-${ slotId } option`).toArray();
+  options.sort(function (a, b) {
+    return a.value.localeCompare(b.value);
+  });
+  dataList.empty();
+  options.forEach(function (option) {
+    dataList.append(option);
+  });
+}
+
+function getSlotId(element) {
+  const slotId = parseInt($(element).attr('data-slot-id'));
+  if (slotId < 0 || slotId >= placeSlots.length) {
+    throw new Error('Invalid slot ID');
+  }
+  return slotId;
+}
+
+// ------------------------------------------------------------------------
+// Section: Map markers and poly-lines
+// ------------------------------------------------------------------------
+
+let markers = {};
+async function addMarker(code) {
+  const location = locations[code];
+  if (!location || !map || markers[location.code]) return;
   
   const contentString = `
   <style>
@@ -138,29 +154,33 @@ const addMarker = async (location) => {
     }
   </style>
   <div id="content">
-      <div id="siteNotice">
-      </div>
-      <h1 id="firstHeading" class="firstHeading">${ location[1] }</h1>
+      <div id="siteNotice"></div>
+      <h1 id="firstHeading" class="firstHeading">${ location.code }</h1>
       <div id="bodyContent">
-          <p><b>Code </b>${ location[0] }</p>
+          <p>${ location.name }</p>
       </div>
   </div>
 `;
   
   const infoWindow = new google.maps.InfoWindow({
     content: contentString,
-    maxWidth: 120,
-    ariaLabel: location[0]
+    maxWidth: 160,
+    ariaLabel: location.code
   });
   
-  const { AdvancedMarkerElement } = await google.maps.importLibrary("marker");
-  const marker = new AdvancedMarkerElement({
+  const marker = new google.maps.Marker({
     map: map,
-    position: { lat: location[2], lng: location[3] },
-    title: location[0]
+    position: { lat: location.latitude, lng: location.longitude },
+    title: location.name,
+    label: {
+      text: code,
+      color: "rgba(87,8,0,0.5)",
+      fontSize: "11px",
+      fontWeight: "bold"
+    }
   });
   
-  markers.push([marker, infoWindow]);
+  markers[location.code] = [marker, infoWindow];
   
   marker.addListener("click", () => {
     infoWindow.open({
@@ -168,13 +188,63 @@ const addMarker = async (location) => {
       map
     });
   });
-};
+}
+
+function removeMarker(code) {
+  if (!markers[code]) return;
+  
+  const [marker, infoWindow] = markers[code];
+  marker.setMap(null);
+  infoWindow.close();
+  delete markers[code];
+}
+
+// Reset marker and infoWindow
+// https://stackoverflow.com/a/74492809
+function resetMarkers() {
+  markers.forEach(([marker, infoWindow]) => {
+    marker.map = null;
+    infoWindow.close();
+  });
+  markers = {};
+}
+
+function setPolylines() {
+  placeSlots.forEach(code => {
+  
+  })
+}
+
+// ------------------------------------------------------------------------
+// Section: Distance calculations and conversions
+// ------------------------------------------------------------------------
+
+function setTotalDistance() {
+  let distanceM = 0;
+  if (placeSlots.length < 2) return;
+  
+  for (let i = 1; i < placeSlots.length; i++) {
+    const locationFrom = locations[placeSlots[i - 1]];
+    const locationTo = locations[placeSlots[i]];
+    if (!locationTo || !locationFrom) break;
+    
+    const subDistanceM = haversineDistanceM([locationFrom.latitude, locationFrom.longitude],
+      [locationTo.latitude, locationTo.longitude]);
+    distanceM += subDistanceM;
+  }
+  
+  if (distanceM > 0) {
+    $('#distance').val(`${ distanceM.toFixed(2) } m (${ metersToFt(distanceM).toFixed(2) } ft)`);
+  } else {
+    $('#distance').val('');
+  }
+}
 
 function degreesToRadians(degrees) {
   return degrees * Math.PI / 180;
 }
 
-function calculateHaversineDistance(coordinate1, coordinate2) {
+function haversineDistanceM(coordinate1, coordinate2) {
   const earthRadiusKm = 6371;
   const lat1 = coordinate1[0], lon1 = coordinate1[1];
   const lat2 = coordinate2[0], lon2 = coordinate2[1];
@@ -185,5 +255,9 @@ function calculateHaversineDistance(coordinate1, coordinate2) {
     Math.cos(degreesToRadians(lat1)) * Math.cos(degreesToRadians(lat2)) *
     Math.sin(dLon / 2) * Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return earthRadiusKm * c;
+  return earthRadiusKm * c * 1_000;
+}
+
+function metersToFt(meters) {
+  return meters * 3.28084;
 }

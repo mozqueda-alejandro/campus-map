@@ -1,3 +1,9 @@
+:root {
+    --main-bg-color: brown;
+    --main-text-color: white;
+
+}
+
 html, body {
     font-family: Inter, sans-serif;
     font-weight: 500;
@@ -18,10 +24,20 @@ html, body {
 }
 
 #input-container {
+    margin: 12px;
     display: flex;
     flex-direction: column;
-    align-content: center;
-    max-width: 750px;
+    align-items: flex-start;
+}
+
+#input-container > * {
+    margin-top: 12px;
+}
+
+#header-container {
+    flex-grow: 1;
+    display: flex;
+    margin: auto;
 }
 
 #map {
@@ -54,6 +70,30 @@ button {
 }
 
 
+datalist {
+    font-family: "Inter", sans-serif;
+}
+
+input::-webkit-calendar-picker-indicator {
+    display: none;
+    opacity: 0;
+}
+
+table {
+    border-collapse: separate;
+    /*border-top: 12px; !* Adjust this value to set the spacing *!*/
+}
+
+td label {
+    color: #696969;
+}
+
+.places-input {
+    /* left spacing */
+    padding-left: 12px;
+}
+
+
 input {
     font-family: "Inter", sans-serif;
     font-optical-sizing: auto;
@@ -68,29 +108,34 @@ input {
 }
 
 input:disabled {
-    background-color: #f0f0f0;
+    background-color: #f8f8f8;
+    color: #adadad;
 }
 
 input:focus {
     outline: none;
+    transition-property: border;
+    transition-duration: 0.2s;
+    border: 1px solid #696969;
 }
 
-input:hover {
+input:active:not(:disabled) {
+    transition-property: border;
+    transition-duration: 0.2s;
+    border: 1px solid #696969;
+}
+
+input:hover:not(:disabled):not(:active):not(:focus) {
     transition-property: border;
     transition-duration: 0.2s;
     border: 1px solid #a0a0a0;
 }
 
-input:active {
-    border: 1px solid #a0a0a0;
-}
-
-input:not(:hover):not(:active) {
+input:not(:hover):not(:active):not(:focus) {
     transition-property: border;
     transition-duration: 0.2s;
     border: 1px solid #d0d0d0;
 }
-
 
 
 .dropdown {
@@ -134,11 +179,13 @@ input:not(:hover):not(:active) {
         cursor: pointer;
         border-radius: 8px;
         color: #c0c0c0;
+
         &:before {
             content: '<';
             float: right;
         }
     }
+
     .dropdown-label:hover {
         background: #f0f0f0;
     }
